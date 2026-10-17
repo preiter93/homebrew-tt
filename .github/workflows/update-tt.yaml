@@ -1,0 +1,65 @@
+name: Update tt formula
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Released tt version (e.g. v0.1.0)"
+        required: true
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set version
+        run: |
+          echo "VERSION=${{ github.event.inputs.version }}" >> $GITHUB_ENV
+
+      - name: Download release artifacts
+        run: |
+          BASE="https://codeberg.org/phl/tt/releases/download/$VERSION"
+
+          curl -fLO $BASE/tt-$VERSION-aarch64-apple-darwin.tar.gz
+
+      - name: Compute SHA256
+        run: |
+          echo "SHA_MAC_ARM=$(shasum -a 256 tt-$VERSION-aarch64-apple-darwin.tar.gz | awk '{print $1}')" >> $GITHUB_ENV
+
+      - name: Update formula
+        run: |
+          cat > Formula/tt.rb <<EOF
+          class tt < Formula
+            desc "tt: Tiny time tracker"
+            homepage "https://codeberg.org/phl/tt"
+            version "$VERSION"
+            license "MIT"
+            head "https://codeberg.org/phl/tt.git", branch: "main"
+
+            on_macos do
+              url "https://codeberg.org/phl/tt/releases/download/$VERSION/tt-$VERSION-aarch64-apple-darwin.tar.gz"
+              sha256 "$SHA_MAC_ARM"
+            end
+
+            def install
+              bin.install "tt"
+            end
+
+            test do
+              system "#{bin}/tt", "--version"
+            end
+          end
+          EOF
+
+      - name: Commit and push
+        run: |
+          git config user.name "homebrew-bot"
+          git config user.email "homebrew-bot@users.noreply.github.com"
+          git add Formula/tt.rb
+          git commit -m "tt $VERSION"
+          git push
