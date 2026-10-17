@@ -34,7 +34,7 @@ jobs:
       - name: Update formula
         run: |
           cat > Formula/tt.rb <<EOF
-          class tt < Formula
+          class Tt < Formula
             desc "tt: Tiny time tracker"
             homepage "https://codeberg.org/phl/tt"
             version "$VERSION"
