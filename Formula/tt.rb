@@ -1,4 +1,4 @@
-class tt < Formula
+class Tt < Formula
   desc "tt: Tiny time tracker"
   homepage "https://codeberg.org/phl/tt"
   version "v0.1.0"
